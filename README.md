@@ -17,160 +17,158 @@ STEP-5: Display the obtained cipher text.
 
 ## PROGRAM:
 ```
-def toLowerCase(text):
-	return text.lower()
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define SIZE 30
+// Function to convert the string to lowercase
+void toLowerCase(char plain[], int ps)
+{
+int i;
+for (i = 0; i < ps; i++) {
+if (plain[i] > 64 && plain[i] < 91)
+plain[i] += 32;
+}
+}
+// Function to remove all spaces in a string
+int removeSpaces(char* plain, int ps)
+{
+int i, count = 0;
+for (i = 0; i < ps; i++)
+if (plain[i] != ' ')
+plain[count++] = plain[i];
+plain[count] = '\0';
+return count;
+}
+// Function to generate the 5x5 key square
+void generateKeyTable(char key[], int ks, char keyT[5][5])
+{
+int i, j, k, flag = 0, *dicty;
+// a 26 character hashmap
+// to store count of the alphabet
+dicty = (int*)calloc(26, sizeof(int));
+for (i = 0; i < ks; i++) {
+if (key[i] != 'j')
+dicty[key[i] - 97] = 2;
+}
+dicty['j' - 97] = 1;
+i = 0;
+j = 0;
+for (k = 0; k < ks; k++) {
+if (dicty[key[k] - 97] == 2) {
+dicty[key[k] - 97] -= 1;
+keyT[i][j] = key[k];
+j++;
+if (j == 5) {
+i++;
+j = 0;
+}
+}
+}
+for (k = 0; k < 26; k++) {
+if (dicty[k] == 0) {
+keyT[i][j] = (char)(k + 97);
+j++;
+if (j == 5) {
+i++;
+j = 0;
+}
+}
+}
+}
+// Function to search for the characters of a digraph
+// in the key square and return their position
+void search(char keyT[5][5], char a, char b, int arr[])
+{
+int i, j;
+if (a == 'j')
+a = 'i';
+else if (b == 'j')
+b = 'i';
+for (i = 0; i < 5; i++) {
+for (j = 0; j < 5; j++) {
+if (keyT[i][j] == a) {
+arr[0] = i;
+arr[1] = j;
+}
+else if (keyT[i][j] == b) {
+arr[2] = i;
+arr[3] = j;
+}
+}
+}
+}
+// Function to find the modulus with 5
+int mod5(int a)
+{
+return (a % 5);
+}
+// Function to make the plain text length to be even
+int prepare(char str[], int ptrs)
+{
+if (ptrs % 2 != 0) {
+str[ptrs++] = 'z';
+str[ptrs] = '\0';
+}
+return ptrs;
+}
+// Function for performing the encryption
+void encrypt(char str[], char keyT[5][5], int ps)
+{
+int i, a[4];
+for (i = 0; i < ps; i += 2) {
+search(keyT, str[i], str[i + 1], a);
+if (a[0] == a[2]) {
+str[i] = keyT[a[0]][mod5(a[1] + 1)];
+str[i + 1] = keyT[a[0]][mod5(a[3] + 1)];
+}
+else if (a[1] == a[3]) {
+str[i] = keyT[mod5(a[0] + 1)][a[1]];
+str[i + 1] = keyT[mod5(a[2] + 1)][a[1]];
+}
+else {
+str[i] = keyT[a[0]][a[3]];
+str[i + 1] = keyT[a[2]][a[1]];
+}
+}
+}
+// Function to encrypt using Playfair Cipher
+void encryptByPlayfairCipher(char str[], char key[])
+{
+char ps, ks, keyT[5][5];
+// Key
+ks = strlen(key);
+ks = removeSpaces(key, ks);
+toLowerCase(key, ks);
+// Plaintext
+ps = strlen(str);
+toLowerCase(str, ps);
+ps = removeSpaces(str, ps);
+ps = prepare(str, ps);
+generateKeyTable(key, ks, keyT);
+encrypt(str, keyT, ps);
+}
+// Driver code
+int main()
+{
+char str[SIZE], key[SIZE];
+// Key to be encrypted
+strcpy(key, "Welcome");
+printf("Key text: %s\n", key);
+// Plaintext to be encrypted
+strcpy(str, "hello");
+printf("Plain text: %s\n", str);
+// encrypt using Playfair Cipher
+encryptByPlayfairCipher(str, key);
+printf("Cipher text: %s\n", str);
+return 0;
+}
 
-def removeSpaces(text):
-	newText = ""
-	for i in text:
-		if i == " ":
-			continue
-		else:
-			newText = newText + i
-	return newText
-
-def Diagraph(text):
-	Diagraph = []
-	group = 0
-	for i in range(2, len(text), 2):
-		Diagraph.append(text[group:i])
-
-		group = i
-	Diagraph.append(text[group:])
-	return Diagraph
-
-def FillerLetter(text):
-	k = len(text)
-	if k % 2 == 0:
-		for i in range(0, k, 2):
-			if text[i] == text[i+1]:
-				new_word = text[0:i+1] + str('x') + text[i+1:]
-				new_word = FillerLetter(new_word)
-				break
-			else:
-				new_word = text
-	else:
-		for i in range(0, k-1, 2):
-			if text[i] == text[i+1]:
-				new_word = text[0:i+1] + str('x') + text[i+1:]
-				new_word = FillerLetter(new_word)
-				break
-			else:
-				new_word = text
-	return new_word
-
-
-list1 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'k', 'l', 'm',
-		'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-
-# Function to generate the 5x5 key square matrix
-def generateKeyTable(word, list1):
-	key_letters = []
-	for i in word:
-		if i not in key_letters:
-			key_letters.append(i)
-
-	compElements = []
-	for i in key_letters:
-		if i not in compElements:
-			compElements.append(i)
-	for i in list1:
-		if i not in compElements:
-			compElements.append(i)
-
-	matrix = []
-	while compElements != []:
-		matrix.append(compElements[:5])
-		compElements = compElements[5:]
-	return matrix
-
-def search(mat, element):
-	for i in range(5):
-		for j in range(5):
-			if(mat[i][j] == element):
-				return i, j
-
-def encrypt_RowRule(matr, e1r, e1c, e2r, e2c):
-	char1 = ''
-	if e1c == 4:
-		char1 = matr[e1r][0]
-	else:
-		char1 = matr[e1r][e1c+1]
-
-	char2 = ''
-	if e2c == 4:
-		char2 = matr[e2r][0]
-	else:
-		char2 = matr[e2r][e2c+1]
-	return char1, char2
-
-def encrypt_ColumnRule(matr, e1r, e1c, e2r, e2c):
-	char1 = ''
-	if e1r == 4:
-		char1 = matr[0][e1c]
-	else:
-		char1 = matr[e1r+1][e1c]
-
-	char2 = ''
-	if e2r == 4:
-		char2 = matr[0][e2c]
-	else:
-		char2 = matr[e2r+1][e2c]
-
-	return char1, char2
-
-def encrypt_RectangleRule(matr, e1r, e1c, e2r, e2c):
-	char1 = ''
-	char1 = matr[e1r][e2c]
-
-	char2 = ''
-	char2 = matr[e2r][e1c]
-	return char1, char2
-
-
-def encryptByPlayfairCipher(Matrix, plainList):
-	CipherText = []
-	for i in range(0, len(plainList)):
-		c1 = 0
-		c2 = 0
-		ele1_x, ele1_y = search(Matrix, plainList[i][0])
-		ele2_x, ele2_y = search(Matrix, plainList[i][1])
-
-		if ele1_x == ele2_x:
-			c1, c2 = encrypt_RowRule(Matrix, ele1_x, ele1_y, ele2_x, ele2_y)
-			# Get 2 letter cipherText
-		elif ele1_y == ele2_y:
-			c1, c2 = encrypt_ColumnRule(Matrix, ele1_x, ele1_y, ele2_x, ele2_y)
-		else:
-			c1, c2 = encrypt_RectangleRule(
-				Matrix, ele1_x, ele1_y, ele2_x, ele2_y)
-
-		cipher = c1 + c2
-		CipherText.append(cipher)
-	return CipherText
-
-text_Plain = 'animals'
-text_Plain = removeSpaces(toLowerCase(text_Plain))
-PlainTextList = Diagraph(FillerLetter(text_Plain))
-if len(PlainTextList[-1]) != 2:
-	PlainTextList[-1] = PlainTextList[-1]+'z'
-
-key = "Lion"
-print("Key text:", key)
-key = toLowerCase(key)
-Matrix = generateKeyTable(key, list1)
-
-print("Plain Text:", text_Plain)
-CipherList = encryptByPlayfairCipher(Matrix, PlainTextList)
-
-CipherText = ""
-for i in CipherList:
-	CipherText += i
-print("CipherText:", CipherText)
 ```
 
 ## OUTPUT:
-![Screenshot 2024-08-28 161436](https://github.com/user-attachments/assets/5794e51c-fa7a-4a1c-a9f6-e0f1ef1aea4f)
+![Screenshot 2024-11-08 185509](https://github.com/user-attachments/assets/1c8aa67d-7aa1-4bd8-91ee-73e5577d02ab)
+
 
 ## RESULT:
   Thus the Playfair cipher substitution technique had been implemented successfully.
